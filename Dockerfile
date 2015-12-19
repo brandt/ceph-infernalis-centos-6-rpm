@@ -15,14 +15,14 @@ RUN yum install -y bzip2-devel cmake cryptsetup expat-devel fcgi-devel fuse-deve
 # For the /usr/share/selinux/devel/policyhelp dependency
 RUN yum install -y selinux-policy-doc 
 
-# Needed for boost-random
-RUN curl repo.runlevel1.com/brandt.repo > /etc/yum.repos.d/brandt.repo
-RUN yum install -y boost-devel boost-random
-
 # We need a newer version of gcc due to use of C++11 features
 ADD ./src/devtools3.repo /etc/yum.repos.d/devtools3.repo
 RUN yum install -y devtoolset-3-gcc devtoolset-3-binutils devtoolset-3-gcc-c++ && yum clean all
 RUN ln -s /opt/rh/devtoolset-3/enable /etc/profile.d/devtools3.sh
+
+# Needed for boost-random
+RUN curl repo.runlevel1.com/brandt.repo > /etc/yum.repos.d/brandt.repo
+RUN yum install -y boost-devel boost-random
 
 # Have to use UID 1000 b/c http://github.com/boot2docker/boot2docker/issues/581
 RUN adduser mockbuild --uid 1000 --comment "rpm package builder"
