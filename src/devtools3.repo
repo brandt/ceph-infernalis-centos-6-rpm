@@ -1,0 +1,8 @@
+[rhscl-devtoolset-3]
+name=Copr repo for devtoolset-3 owned by rhscl
+baseurl=https://copr-be.cloud.fedoraproject.org/results/rhscl/devtoolset-3/epel-6-$basearch/
+skip_if_unavailable=True
+gpgcheck=1
+gpgkey=https://copr-be.cloud.fedoraproject.org/results/rhscl/devtoolset-3/pubkey.gpg
+enabled=1
+enabled_metadata=1

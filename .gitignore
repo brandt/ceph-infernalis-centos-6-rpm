@@ -1,0 +1,5 @@
+/.vagrant
+/artifacts/*
+/rpmbuild/SOURCES/*
+!/rpmbuild/SOURCES/.gitkeep
+/Notes
