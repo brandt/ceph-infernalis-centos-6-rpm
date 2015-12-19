@@ -5,12 +5,7 @@
 %bcond_without tcmalloc
 %bcond_without libs_compat
 %bcond_with lowmem_builder
-%if 0%{?fedora} || 0%{?rhel}
 %bcond_without selinux
-%endif
-%if 0%{?suse_version}
-%bcond_with selinux
-%endif
 
 
 %if (0%{?el5} || (0%{?rhel_version} >= 500 && 0%{?rhel_version} <= 600))
