@@ -1282,9 +1282,9 @@ if [ $1 -eq 0 ]; then
     # Start the daemons if they were running before
     if test $STATUS -eq 0; then
     %if 0%{?_with_systemd}
-	/usr/bin/systemctl start ceph.target > /dev/null 2>&1 || :
+        /usr/bin/systemctl start ceph.target > /dev/null 2>&1 || :
     %else
-	/sbin/service ceph start >/dev/null 2>&1 || :
+        /sbin/service ceph start >/dev/null 2>&1 || :
     %endif
     fi
 fi
