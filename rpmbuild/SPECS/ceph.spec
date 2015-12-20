@@ -6,6 +6,9 @@
 %bcond_without libs_compat
 %bcond_with lowmem_builder
 
+# Don't barf on missing build-ids when creating -debuginfo packages
+%undefine _missing_build_ids_terminate_build
+
 %if (0%{?el5} || (0%{?rhel_version} >= 500 && 0%{?rhel_version} <= 600))
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 %{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
