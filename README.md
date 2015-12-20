@@ -34,3 +34,9 @@ docker-machine create -d virtualbox --virtualbox-disk-size "30000" --virtualbox-
 eval "$(docker-machine env build)"
 ```
 
+
+## Errata
+
+This currently builds [v9.2.0](https://github.com/ceph/ceph/tree/v9.2.0).
+
+To see how the Infernalis branch as drifted from this release, see: https://github.com/ceph/ceph/compare/v9.2.0...infernalis
