@@ -5,28 +5,10 @@
 %bcond_without tcmalloc
 %bcond_without libs_compat
 %bcond_with lowmem_builder
-%bcond_without selinux
-
 
 %if (0%{?el5} || (0%{?rhel_version} >= 500 && 0%{?rhel_version} <= 600))
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 %{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
-%endif
-
-%if %{with selinux}
-# get selinux policy version
-%{!?_selinux_policy_version: %global _selinux_policy_version %(sed -e 's,.*selinux-policy-\\([^/]*\\)/.*,\\1,' /usr/share/selinux/devel/policyhelp 2>/dev/null || echo 0.0.0)}
-
-%define relabel_files() \
-restorecon -R /usr/bin/ceph-mon > /dev/null 2>&1; \
-restorecon -R /usr/bin/ceph-osd > /dev/null 2>&1; \
-restorecon -R /usr/bin/ceph-mds > /dev/null 2>&1; \
-restorecon -R /usr/bin/radosgw > /dev/null 2>&1; \
-restorecon -R /etc/rc\.d/init\.d/ceph > /dev/null 2>&1; \
-restorecon -R /etc/rc\.d/init\.d/radosgw > /dev/null 2>&1; \
-restorecon -R /var/run/ceph > /dev/null 2>&1; \
-restorecon -R /var/lib/ceph > /dev/null 2>&1; \
-restorecon -R /var/log/ceph > /dev/null 2>&1;
 %endif
 
 %{!?_udevrulesdir: %global _udevrulesdir /lib/udev/rules.d}
@@ -69,9 +51,6 @@ Requires:	librbd1 = %{epoch}:%{version}-%{release}
 Requires:	librados2 = %{epoch}:%{version}-%{release}
 Requires:	libcephfs1 = %{epoch}:%{version}-%{release}
 Requires:	ceph-common = %{epoch}:%{version}-%{release}
-%if 0%{with selinux}
-Requires:	ceph-selinux = %{epoch}:%{version}-%{release}
-%endif
 Requires:	python-rados = %{epoch}:%{version}-%{release}
 Requires:	python-rbd = %{epoch}:%{version}-%{release}
 Requires:	python-cephfs = %{epoch}:%{version}-%{release}
@@ -90,11 +69,6 @@ Requires(post):	binutils
 %if 0%{with cephfs_java}
 BuildRequires:	java-devel
 BuildRequires:	sharutils
-%endif
-%if 0%{with selinux}
-BuildRequires:	checkpolicy
-BuildRequires:	selinux-policy-devel
-BuildRequires:	/usr/share/selinux/devel/policyhelp
 %endif
 BuildRequires:	gcc-c++
 BuildRequires:	boost-devel
@@ -252,9 +226,6 @@ FUSE based client to map Ceph rbd images to files
 Summary:	Rados REST gateway
 Group:		Development/Libraries
 Requires:	ceph-common = %{epoch}:%{version}-%{release}
-%if 0%{with selinux}
-Requires:	ceph-selinux = %{epoch}:%{version}-%{release}
-%endif
 Requires:	librados2 = %{epoch}:%{version}-%{release}
 %if 0%{?rhel} || 0%{?fedora}
 Requires:	mailcap
@@ -453,22 +424,6 @@ This package contains the Java libraries for the Ceph File System.
 
 %endif
 
-%if 0%{with selinux}
-
-%package selinux
-Summary:	SELinux support for Ceph MON, OSD and MDS
-Group:		System Environment/Base
-Requires:	%{name}
-Requires:	policycoreutils, libselinux-utils
-Requires(post): selinux-policy-base >= %{_selinux_policy_version}, policycoreutils, gawk
-Requires(postun): policycoreutils
-%description selinux
-This package contains SELinux support for Ceph MON, OSD and MDS. The package
-also performs file-system relabelling which can take a long time on heavily
-populated file-systems.
-
-%endif
-
 %if 0%{with libs_compat}
 
 %package libs-compat
@@ -564,9 +519,6 @@ export RPM_OPT_FLAGS=`echo $RPM_OPT_FLAGS | sed -e 's/i386/i486/'`
 		--with-debug \
 %if 0%{with cephfs_java}
 		--enable-cephfs-java \
-%endif
-%if 0%{with selinux}
-		--with-selinux \
 %endif
 		--with-librocksdb-static=check \
 %if 0%{?rhel} || 0%{?fedora}
@@ -1187,110 +1139,6 @@ ln -sf %{_libdir}/librbd.so.1 /usr/lib64/qemu/librbd.so.1
 %{_javadir}/libcephfs.jar
 %{_javadir}/libcephfs-test.jar
 %endif
-
-#################################################################################
-%if 0%{with selinux}
-%files selinux
-%defattr(-,root,root,-)
-%attr(0600,root,root) %{_datadir}/selinux/packages/ceph.pp
-%{_datadir}/selinux/devel/include/contrib/ceph.if
-%{_mandir}/man8/ceph_selinux.8*
-
-%post selinux
-# Install the policy
-OLD_POLVER=$(%{_sbindir}/semodule -l | grep -P '^ceph[\t ]' | awk '{print $2}')
-%{_sbindir}/semodule -n -i %{_datadir}/selinux/packages/ceph.pp
-NEW_POLVER=$(%{_sbindir}/semodule -l | grep -P '^ceph[\t ]' | awk '{print $2}')
-
-# Load the policy if SELinux is enabled
-if %{_sbindir}/selinuxenabled; then
-    %{_sbindir}/load_policy
-else
-    # Do not relabel if selinux is not enabled
-    exit 0
-fi
-
-if test "$OLD_POLVER" == "$NEW_POLVER"; then
-   # Do not relabel if policy version did not change
-   exit 0
-fi
-
-# Check whether the daemons are running
-%if 0%{?_with_systemd}
-    /usr/bin/systemctl status ceph.target > /dev/null 2>&1
-%else
-    /sbin/service ceph status >/dev/null 2>&1
-%endif
-STATUS=$?
-
-# Stop the daemons if they were running
-if test $STATUS -eq 0; then
-%if 0%{?_with_systemd}
-    /usr/bin/systemctl stop ceph.target > /dev/null 2>&1
-%else
-    /sbin/service ceph stop >/dev/null 2>&1
-%endif
-fi
-
-# Now, relabel the files
-%relabel_files
-
-# Start the daemons iff they were running before
-if test $STATUS -eq 0; then
-%if 0%{?_with_systemd}
-    /usr/bin/systemctl start ceph.target > /dev/null 2>&1 || :
-%else
-    /sbin/service ceph start >/dev/null 2>&1 || :
-%endif
-fi
-
-exit 0
-
-%postun selinux
-if [ $1 -eq 0 ]; then
-    # Remove the module
-    %{_sbindir}/semodule -n -r ceph
-
-    # Reload the policy if SELinux is enabled
-    if %{_sbindir}/selinuxenabled ; then
-        %{_sbindir}/load_policy
-    else
-        # Do not relabel if SELinux is not enabled
-        exit 0
-    fi
-
-    # Check whether the daemons are running
-    %if 0%{?_with_systemd}
-        /usr/bin/systemctl status ceph.target > /dev/null 2>&1
-    %else
-        /sbin/service ceph status >/dev/null 2>&1
-    %endif
-    STATUS=$?
-
-    # Stop the daemons if they were running
-    if test $STATUS -eq 0; then
-    %if 0%{?_with_systemd}
-        /usr/bin/systemctl stop ceph.target > /dev/null 2>&1
-    %else
-        /sbin/service ceph stop >/dev/null 2>&1
-    %endif
-    fi
-
-    # Now, relabel the files
-    %relabel_files
-
-    # Start the daemons if they were running before
-    if test $STATUS -eq 0; then
-    %if 0%{?_with_systemd}
-        /usr/bin/systemctl start ceph.target > /dev/null 2>&1 || :
-    %else
-        /sbin/service ceph start >/dev/null 2>&1 || :
-    %endif
-    fi
-fi
-exit 0
-
-%endif # with selinux
 
 #################################################################################
 %if 0%{with libs_compat}
