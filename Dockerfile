@@ -10,7 +10,7 @@ RUN yum install -y rpm-build rsync which tar wget @"Development Tools"
 RUN yum install -y epel-release
 
 # Ceph Dependencies
-RUN yum install -y bzip2-devel cmake cryptsetup expat-devel fcgi-devel fuse-devel gperftools-devel hdparm java-devel junit4 keyutils-libs-devel leveldb-devel libaio-devel libatomic_ops-devel libbabeltrace-devel libblkid-devel libcurl-devel libedit-devel libudev-devel libxml2-devel lttng-ust-devel nss-devel parted python-argparse python-nose python-requests python-sphinx10 python-virtualenv selinux-policy-devel sharutils snappy-devel xfsprogs xfsprogs-devel xmlstarlet yasm
+RUN yum install -y redhat-lsb-core bzip2-devel cmake cryptsetup expat-devel fcgi-devel fuse-devel gperftools-devel hdparm java-devel junit4 keyutils-libs-devel leveldb-devel libaio-devel libatomic_ops-devel libbabeltrace-devel libblkid-devel libcurl-devel libedit-devel libudev-devel libxml2-devel lttng-ust-devel nss-devel parted python-argparse python-nose python-requests python-sphinx10 python-virtualenv selinux-policy-devel sharutils snappy-devel xfsprogs xfsprogs-devel xmlstarlet yasm
 
 # For the /usr/share/selinux/devel/policyhelp dependency
 RUN yum install -y selinux-policy-doc 
