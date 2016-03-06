@@ -1,5 +1,5 @@
 /.vagrant
 /artifacts/*
-/rpmbuild/SOURCES/*
-!/rpmbuild/SOURCES/.gitkeep
+/rpmbuild/SOURCES/ceph-9.2.0
+/rpmbuild/SOURCES/*.tar.bz2
 /Notes
